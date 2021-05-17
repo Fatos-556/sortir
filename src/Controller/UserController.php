@@ -2,15 +2,17 @@
 
 namespace App\Controller;
 
+use App\Entity\Images;
 use App\Entity\User;
 use App\Form\RegisterType;
+use App\Form\UserType;
 use Doctrine\ORM\EntityManagerInterface;
-use Psr\Container\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+
 
 
 class UserController extends AbstractController
@@ -24,9 +26,36 @@ class UserController extends AbstractController
         $user = new User();
 
         $registerForm = $this->createForm(RegisterType::class, $user);
+       // $images = 'favicon.png';
 
         $registerForm->handleRequest($request);
         if ($registerForm->isSubmitted() && $registerForm->isValid()) {
+            //gestion des images :
+            //récuperer les images trasmises
+            $images = $registerForm->get('images')->getData();
+            //on boucle les images avec foreach
+            foreach ($images as $image){
+                //generer un nouveau nom de fichier
+                $fichier =md5(uniqid()) . '.' .$image->guessExtension();
+
+                //copier le fichier dans le dossier public/uploads
+
+                $image->move(
+                  $this->getParameter('images_directory'),
+                  $fichier
+                );
+
+                //On stock l'image dans la base de données (son nom)
+                $img = new Images();
+                $img ->setName($fichier);
+                $user->addImage($img);
+
+
+
+            }
+
+
+
             //hasher le mdp OBLIGATOIRE
             $hashed = $encoder->encodePassword($user, $user->getPassword());
             $user->setPassword($hashed);
@@ -37,10 +66,17 @@ class UserController extends AbstractController
         }
 
         return $this->render("user/register.html.twig", [
-            "registerForm" => $registerForm->createView()
+            "registerForm" => $registerForm->createView(),
+        //    'images' => $images
 
         ]);
     }
+
+
+
+
+
+
 
     /**
      * @Route("/profil", name="profil")
@@ -49,12 +85,57 @@ class UserController extends AbstractController
     {
 
         $userRepo = $this->getDoctrine()->getRepository(User::class);
-        $user = $userRepo->findAll();
+        $user = $userRepo->joindre();
+
+
 
         return $this->render('user/profil.html.twig', [
             "user" => $user
         ]);
     }
+
+    /**
+     * @Route("profil/{id}/edit", name="profil_edit", methods={"GET","POST"})
+     */
+    public function edit(Request $request, User $user): Response
+    {
+        $form = $this->createForm(UserType::class, $user);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            // On récupère les images transmises
+            $images = $form->get('images')->getData();
+
+            // On boucle sur les images
+            foreach($images as $image){
+                // On génère un nouveau nom de fichier
+                $fichier = md5(uniqid()) . '.' . $image->guessExtension();
+
+                // On copie le fichier dans le dossier uploads
+                $image->move(
+                    $this->getParameter('images_directory'),
+                    $fichier
+                );
+
+                // On stocke l'image dans la base de données (son nom)
+                $img = new Images();
+                $img->setName($fichier);
+                $user->addImage($img);
+            }
+
+            $this->getDoctrine()->getManager()->flush();
+
+            return $this->redirectToRoute('profil');
+        }
+
+        return $this->render('user/edit.html.twig', [
+            'user' => $user,
+            'form' => $form->createView(),
+        ]);
+    }
+
+
+
 
     /**
      * @Route("/user/login", name="login")
@@ -93,6 +174,32 @@ class UserController extends AbstractController
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
 
         // ...
+    }
+
+
+    /**
+     * @Route("/user/pass/modifier", name="users_pass_modifier")
+     */
+    public function editPass(Request $request, UserPasswordEncoderInterface $passwordEncoder)
+    {
+        if($request->isMethod('POST')){
+            $em = $this->getDoctrine()->getManager();
+
+            $user = $this->getUser();
+
+            // On vérifie si les 2 mots de passe sont identiques
+            if($request->request->get('pass') == $request->request->get('pass2')){
+                $user->setPassword($passwordEncoder->encodePassword($user, $request->request->get('pass')));
+                $em->flush();
+                $this->addFlash('message', 'Mot de passe mis à jour avec succès');
+
+                return $this->redirectToRoute('profil');
+            }else{
+                $this->addFlash('error', 'Les deux mots de passe ne sont pas identiques');
+            }
+        }
+
+        return $this->render('user/editpass.html.twig');
     }
 
 

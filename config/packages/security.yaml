@@ -18,6 +18,7 @@ security:
             logout:
                 path: logout
                 target: home
+                #pour se souvenir de moi
             remember_me:
                 secret: '%kernel.secret%'
                 lifetime: 604800 # 1 week in seconds
@@ -30,3 +31,12 @@ security:
     encoders:
         App\Entity\User:
             algorithm : bcrypt
+    #définition des routes protégées
+    access_control:
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/profil, roles: ROLE_USER }
+
+    role_hierarchy:
+        ROLE_PARTICIPANT: ROLE_USER
+        ROLE_ORGANISATEUR: ROLE_PARTICIPANT
+        ROLE_ADMIN: ROLE_ORGANISATEUR

@@ -1,0 +1,28 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Changer le photo{% endblock %}
+
+{% block body %}
+    <h1>Changer la photo</h1>
+    {% for image in app.user.images %}
+        <div>
+            <img src="{{ asset('uploads/' ~ image.name) }}" alt="Image" width="150">
+
+            {# ceci est bien en revanche il faut travailler sur le profil_edit.html.twig par la suite
+                        <a href="{{ path('profil_edit', {'id': app.user.id}) }}">Changer la photo</a>#}
+        </div>
+    {% endfor %}
+{#     {{ include('user/_form.html.twig', {'button_label': 'Update'}) }}#}
+    {{ form_start(registerForm) }}
+    {{ form_row(user.images)}}
+
+    <button type="submit">Send!</button>
+    {{ form_end(registerForm) }}
+
+    <a href="{{ path('profil') }}">Retourner dans votre profil</a>
+
+{# {{ include('user/_delete_form.html.twig') }}#}
+{% endblock %}
+{# {% block javascripts %}
+    <script src="{{ asset('js/images.js') }}"></script>
+{% endblock %}#}

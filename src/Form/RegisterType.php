@@ -1,10 +1,9 @@
 <?php
-
 namespace App\Form;
-
 use App\Entity\User;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\RepeatedType;
@@ -16,6 +15,15 @@ class RegisterType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
+          //on ajoute le champ "images" dans le formulaire
+                // il n'est pas lié à la base de données (mapped à false)
+                ->add('images', FileType::class,[
+                    'label' =>false,
+                    'multiple'=>true,
+                    'mapped'=>false,
+                    'required' => false
+    ])
+
             ->add('pseudo')
             ->add('nom')
             ->add('prenom')

@@ -1,19 +1,61 @@
 {% extends 'layout.html.twig' %}
 
 {% block main %}
-
     <br>
     <div class="card border-primary mb-3 align-item-md-center" style="max-width: 20rem;">
         <div class="card-header">Mon Profil</div>
         <div class="card-body">
             <h4 class="card-title"></h4>
-            <p class="card-text">
-                Prénom : {{ app.user.prenom}}
-                <br>
-                Nom : {{ app.user.nom }}
-                <br>
-                Email : {{ app.user.email }}
-            </p>
+
+            <table class="table">
+                <tbody>
+
+                <tr>
+                    <th>Image</th>
+<td>
+    {# Ceci permet d'afficher l'image de profil pour un utilisateur #}
+    {% for image in app.user.images %}
+                        <div>
+                            <img src="{{ asset('uploads/' ~ image.name) }}" alt="Image" width="150">
+
+
+                        </div>
+                    {% endfor %}
+</td>
+                </tr>
+
+{# Ceci permet d'afficher le pseudo d'un utilisateur #}
+                <tr>
+                    <th>Pseudo</th>
+                    <td>{{ app.user.pseudo }}</td>
+                </tr>
+                <tr>
+                    <th>Nom</th>
+                    <td>{{ app.user.nom }}</td>
+                </tr>
+                <tr>
+                    <th>Prenom</th>
+                    <td>{{ app.user.prenom }}</td>
+                </tr>
+                <tr>
+                    <th>Telephone</th>
+                    <td>{{ app.user.telephone }}</td>
+                </tr>
+                <tr>
+                    <th>Email</th>
+                    <td>{{ app.user.email }}</td>
+                </tr>
+
+{#
+                <tr>
+                    <th>Actif</th>
+                    <td>{{ app.user.actif }}</td>
+                </tr>#}
+
+                </tbody>
+            </table>
+
+            <a  href="{{ path ('users_pass_modifier') }}">Changer le mot de passe</a>
         </div>
     </div>
 

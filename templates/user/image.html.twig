@@ -1,0 +1,18 @@
+
+<img src="/uploads/{{ image.name }}">
+
+{#
+ {% for image in user.images %}
+     <div>
+         <img src="{{ asset('/uploads/' ~ image.name) }}" alt="Image" width="150">
+         <a href="{{ path('user_delete_image', {id: image.id}) }}" data-delete data-token="{{ csrf_token('delete' ~ image.id) }}">Supprimer</a>
+     </div>
+ {% endfor %}
+{#
+<img src="/img/{{ user.image.name }}">
+
+
+ <img src="{{ asset('/uploads/' ~ image.name) }}" alt="Images" width="150">
+
+
+#}

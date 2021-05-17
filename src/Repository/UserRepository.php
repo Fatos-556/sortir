@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bridge\Doctrine\Security\User\UserLoaderInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -20,6 +21,53 @@ class UserRepository extends ServiceEntityRepository implements UserLoaderInterf
     {
         parent::__construct($registry, User::class);
     }
+
+    public function joindre(){
+        $qb = $this->getEntityManager()->createQueryBuilder();
+        $qb->select('u')
+            ->from('User','u')
+            ->join('Images', 'i')
+            ->where('i.id = :user_id')
+            ;
+    }
+    public function editProfil(){
+        $qb = $this->getEntityManager()->createQueryBuilder();
+        $qb->select('i.name as name')
+            ->from('User','u')
+            ->join('Images', 'i')
+            ->where('i.id = :user_id')
+        ;
+    }
+
+/*
+public function joindreTable(){
+$qb = $this->getEntityManager()->createQueryBuilder();
+
+return $qb->select('name')
+->from('User', 'u')
+->join('Images', 'i', 'ON', 'u.id=i.id_user')
+->where('User.id = ?')
+->getQuery()
+->getResult();
+}
+
+/*
+    public function joindreTableImage($images)
+    {
+
+        $qb = $this->createQueryBuilder('i')
+                    ->join('i.images', 'ii')
+            ->join('i.participants', 'ip' )
+
+            ->where('i.images IN (:images)')
+            ->setParameter('images', $images);
+
+return $qb->getQuery()->getResult();
+
+      /*  $qb->setMaxResults(1);
+        $query = $qb->getQuery();
+
+    }*/
 
     // /**
     //  * @return User[] Returns an array of User objects

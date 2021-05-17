@@ -3,13 +3,17 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
+
 /**
  * @ORM\Table(name="PARTICIPANTS")
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository", repositoryClass=UserRepository::class)
+ * UniqueEntity(fields={"email"}, message="There is already an account with this email")
  */
 class User implements UserInterface
 {
@@ -19,6 +23,73 @@ class User implements UserInterface
      * @ORM\Column(type="integer")
      */
     private $id;
+
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Images", mappedBy="User", orphanRemoval=true, cascade={"persist"})
+     */
+    private $images;
+
+    /**
+     * @return Collection|Images[]
+     */
+    public function getImages(): Collection
+    {
+        return $this->images;
+    }
+
+    public function addImage(Images $image): self
+    {
+        if (!$this->images->contains($image)) {
+            $this->images[] = $image;
+            $image->setUser($this);
+        }
+
+        return $this;
+    }
+
+public function removeImage(Images $image): self
+    {
+        if ($this->images->contains($image)) {
+            $this->images->removeElement($image);
+            // set the owning side to null (unless already changed)
+            if ($image->getUser() === $this) {
+                $image->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+
+    /**
+     *toString
+     *@return string
+     */
+    public function __toString(): string
+    {
+        return $this->getId();
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     /**
      * @Assert\NotBlank(message="Merci de remplir ce champ")
@@ -58,7 +129,7 @@ class User implements UserInterface
     /**
      * @ORM\Column (type="integer", nullable=true)
      */
-    private $administrateur;
+    private $administrateur = false;
 
     /**
      * @ORM\Column (type="integer", nullable=true)
@@ -66,19 +137,32 @@ class User implements UserInterface
     private $actif;
 
     /**
-     * @ORM\Column (type="integer", length=11, nullable=true)
+     * @ORM\Column(type="json")
      */
-    private $campus_no_campus;
-
-    //pas sauvegardé en base
-    private $roles;
+    private $roles = ["ROLE_USER"];
 
     /**
-     * @return mixed
+     * @ORM\ManyToOne(targetEntity="App\Entity\Campus", inversedBy="users")
      */
-    public function getRoles()
+    private $campus;
+
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Sortie", mappedBy="organisateur", cascade="remove")
+     */
+    private $sortiesOrganisees;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Sortie", mappedBy="membresInscrits", cascade="remove")
+     */
+    private $inscriptionsSortie;
+
+    public function __construct()
     {
-        return ["ROLE_USER"];
+        $this->sortiesOrganisees = new ArrayCollection();
+        $this->inscriptionsSortie = new ArrayCollection();
+
+        $this->images = new ArrayCollection();
     }
 
     /**
@@ -132,6 +216,22 @@ class User implements UserInterface
     /**
      * @return mixed
      */
+    public function getPrenom()
+    {
+        return $this->prenom;
+    }
+
+    /**
+     * @param mixed $prenom
+     */
+    public function setPrenom($prenom): void
+    {
+        $this->prenom = $prenom;
+    }
+
+    /**
+     * @return mixed
+     */
     public function getTelephone()
     {
         return $this->telephone;
@@ -178,17 +278,17 @@ class User implements UserInterface
     }
 
     /**
-     * @return mixed
+     * @return bool
      */
-    public function getAdministrateur()
+    public function isAdministrateur(): bool
     {
         return $this->administrateur;
     }
 
     /**
-     * @param mixed $administrateur
+     * @param bool $administrateur
      */
-    public function setAdministrateur($administrateur): void
+    public function setAdministrateur(bool $administrateur): void
     {
         $this->administrateur = $administrateur;
     }
@@ -210,43 +310,82 @@ class User implements UserInterface
     }
 
     /**
+     * @return string[]
+     */
+    public function getRoles(): array
+    {
+        return $this->roles;
+    }
+
+    /**
+     * @param string[] $roles
+     */
+    public function setRoles(array $roles): void
+    {
+        $this->roles = $roles;
+    }
+
+    /**
      * @return mixed
      */
-    public function getCampusNoCampus()
+    public function getCampus()
     {
-        return $this->campus_no_campus;
+        return $this->campus;
     }
 
     /**
-     * @param mixed $campus_no_campus
+     * @param mixed $campus
      */
-    public function setCampusNoCampus($campus_no_campus): void
+    public function setCampus($campus): void
     {
-        $this->campus_no_campus = $campus_no_campus;
+        $this->campus = $campus;
     }
 
     /**
-     * @return mixed
+     * @return ArrayCollection
      */
-    public function getPrenom()
+    public function getSortiesOrganisees(): ArrayCollection
     {
-        return $this->prenom;
+        return $this->sortiesOrganisees;
     }
 
     /**
-     * @param mixed $prenom
+     * @param ArrayCollection $sortiesOrganisees
      */
-    public function setPrenom($prenom): void
+    public function setSortiesOrganisees(ArrayCollection $sortiesOrganisees): void
     {
-        $this->prenom = $prenom;
+        $this->sortiesOrganisees = $sortiesOrganisees;
     }
+
+    /**
+     * @return ArrayCollection
+     */
+    public function getInscriptionsSortie(): ArrayCollection
+    {
+        return $this->inscriptionsSortie;
+    }
+
+    /**
+     * @param ArrayCollection $inscriptionsSortie
+     */
+    public function setInscriptionsSortie(ArrayCollection $inscriptionsSortie): void
+    {
+        $this->inscriptionsSortie = $inscriptionsSortie;
+    }
+
+
+
+
 
 
 
     //inutile pour nous
     public function getSalt() {return null;}
     //inutile pour nous
-    public function eraseCredentials(){}
+    public function eraseCredentials(){
+        // If you store any temporary, sensitive data on the user, clear it here
+         $this->plainPassword = null;
+    }
 
     /**
      * @return mixed
@@ -255,4 +394,6 @@ class User implements UserInterface
     {
         return $this->pseudo;
     }
+
+
 }
